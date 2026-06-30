@@ -5,8 +5,7 @@ A short empirical analysis of Robinhood's quarterly financials, testing whether
 reported revenue growth masks a deterioration in revenue *quality*.
 
 Data: Robinhood 10-Q / 8-K filings (SEC EDGAR, CIK 1783879), Q1 2025 - Q1 2026.
-Every figure below is taken directly from a filing; see notes for the one
-disclosure limitation (event-contract revenue).
+Every figure below is taken directly from a filing; see notes for the event-contract revenue.
 All figures in $ millions unless noted.
 
 Author: Giovanni Adelchi Colalillo
@@ -20,11 +19,12 @@ import statsmodels.api as sm
 # ---------------------------------------------------------------------------
 # 1. DATA  (five verified quarters, sourced from 8-K Ex 99.1 statements of ops)
 # ---------------------------------------------------------------------------
-# NOTE on event contracts: Robinhood did not disclose event-contract revenue
-# as its own line until Q1 2026. In Q2-Q3 2025 it was volume-only; in Q4 2025
-# it was bundled into "other transaction revenue." We have CLEAN revenue only
-# at the two endpoints ($3mm in Q1'25, $104mm in Q1'26) and use NaN for the
-# quarters where it isn't separately disclosed, rather than inventing a number.
+# NOote on event contracts: 
+# Robinhood did not disclose event-contract revenue
+# independently until Q1 2026. In Q2-Q3 2025 it was volume-only; in Q4 2025
+# it was bundled into "other transaction revenue." Clean revenue only
+# at the two endpoints ($3mm in Q1'25, $104mm in Q1'26) and I have used NaN for the
+# quarters where it isn't separately disclosed. 
 
 data = {
     "quarter":      ["Q1-25", "Q2-25", "Q3-25", "Q4-25", "Q1-26"],
@@ -62,17 +62,13 @@ print()
 # ---------------------------------------------------------------------------
 # 3. THE MIX-ILLUSION TEST
 # ---------------------------------------------------------------------------
-# WHAT THIS TESTS: a "mix illusion" is when total revenue grows mainly because
+# Mix illusion is when total revenue grows mainly because
 # a new, fast-growing line is large enough to offset a decline in an older
-# one -- the headline growth is real, but it's a story about CHANGING
-# COMPOSITION (mix), not broad-based strength. The test: recompute growth with
-# the new line removed ("core" growth) and compare it to total growth. If core
+# one, not broad-based strength. The test recomputes growth with
+# the new line removed and compare it to total growth. If core
 # growth is much weaker, the headline number is doing more work than the
 # underlying business supports.
 #
-# Here, the new line is event-contracts (prediction markets) revenue, which
-# barely existed a year ago. We check: how much of HOOD's +15% reported
-# growth is this one young line carrying, versus the rest of the business?
 core_q1_25 = df["total_rev"].iloc[0] - df["event_rev"].iloc[0]
 core_q1_26 = df["total_rev"].iloc[-1] - df["event_rev"].iloc[-1]
 core_growth = core_q1_26 / core_q1_25 - 1
@@ -87,15 +83,11 @@ print("the core business grew far more slowly as crypto fell ~47%.")
 print()
 
 # ---------------------------------------------------------------------------
-# 4. MARGIN TREND REGRESSION (honest about what it does and doesn't show)
+# 4. MARGIN TREND REGRESSION
 # ---------------------------------------------------------------------------
-# WHAT THIS TESTS: is net margin compression a steady, ongoing trend, or did
-# margin just bounce around (e.g., a seasonal spike) without a real direction?
-# OLS regresses net margin on a simple time index (quarter 1,2,3...5); the
-# slope tells us the AVERAGE per-quarter change. A flat slope here does NOT
-# mean "no compression" -- it means the relationship isn't a straight line.
-# With only 5 quarters and a strong Q4 seasonal spike, this is illustrative
-# of the method, not a statistically powerful claim.
+# OLS regresses net margin on a simple time index; the
+# slope tells us the average change each quarter.
+
 X = sm.add_constant(df["quarter_num"])
 y = df["net_margin"]
 model = sm.OLS(y, X).fit()
